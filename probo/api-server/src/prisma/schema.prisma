@@ -1,0 +1,90 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id            String         @id @default(uuid())
+    username      String         @unique @map("user_id")
+    phonenumber   String
+    email         String
+    password      String
+    avatarUrl     String?
+    inrBalances   InrBalance[]
+    stockBalances StockBalance[]
+}
+
+model InrBalance {
+    id      Int    @id @default(autoincrement())
+    user    User   @relation(fields: [userId], references: [id])
+    userId  String @unique
+    balance Float
+    locked  Float
+}
+
+model StockBalance {
+    id          Int    @id @default(autoincrement())
+    user        User   @relation(fields: [userId], references: [id])
+    userId      String
+    market      Market @relation(fields: [marketId], references: [id])
+    marketId    String
+    yesQuantity Int
+    yesLocked   Int
+    noQuantity  Int
+    noLocked    Int
+}
+
+model Market {
+    id              String         @id @default(uuid())
+    title           String         @default("")
+    stockSymbol     String         @default("")
+    description     String
+    startTime       DateTime
+    endTime         DateTime
+    result          String?
+    thumbnail       String?
+    category        Category       @relation(fields: [categoryId], references: [id])
+    categoryId      String
+    sourceOfTruth   String         @default("")
+    StockBalance    StockBalance[]
+    numberOfTraders Int            @default(0)
+
+    @@map("markets")
+}
+
+model Order {
+    id             String      @id @default(uuid())
+    stockSymbol    String
+    stockType      String
+    createdAt      DateTime    @default(now())
+    userId         String      @db.VarChar(255)
+    quantity       Int
+    price          Float
+    orderType      String
+    totalPrice     Float
+    status         OrderStatus
+    tradedQuantity Int
+    marketId       String
+}
+
+enum OrderStatus {
+    pending
+    partial
+    completed
+}
+
+enum StockType {
+    yes
+    no
+}
+
+model Category {
+    id           String   @id @default(uuid())
+    categoryName String
+    icon         String?
+    markets      Market[]
+}
